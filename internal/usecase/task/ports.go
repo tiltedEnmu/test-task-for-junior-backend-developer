@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 
+	rrdomain "example.com/taskservice/internal/domain/recurrencerule"
 	taskdomain "example.com/taskservice/internal/domain/task"
 )
 
@@ -23,13 +24,17 @@ type Usecase interface {
 }
 
 type CreateInput struct {
-	Title       string
-	Description string
-	Status      taskdomain.Status
+	Title          string
+	Description    string
+	Status         taskdomain.Status
+	IsRecurring    bool
+	RecurrenceRule rrdomain.RecurrenceRule
 }
 
 type UpdateInput struct {
-	Title       string
-	Description string
-	Status      taskdomain.Status
+	Title          string
+	Description    string
+	Status         taskdomain.Status
+	IsRecurring    bool
+	RecurrenceRule rrdomain.RecurrenceRule
 }

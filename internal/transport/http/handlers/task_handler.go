@@ -27,11 +27,15 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	created, err := h.usecase.Create(r.Context(), taskusecase.CreateInput{
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      req.Status,
-	})
+	created, err := h.usecase.Create(
+		r.Context(), taskusecase.CreateInput{
+			Title:          req.Title,
+			Description:    req.Description,
+			Status:         req.Status,
+			IsRecurring:    req.IsRecurring,
+			RecurrenceRule: req.RecurrenceRule,
+		},
+	)
 	if err != nil {
 		writeUsecaseError(w, err)
 		return
@@ -69,11 +73,13 @@ func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, err := h.usecase.Update(r.Context(), id, taskusecase.UpdateInput{
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      req.Status,
-	})
+	updated, err := h.usecase.Update(
+		r.Context(), id, taskusecase.UpdateInput{
+			Title:       req.Title,
+			Description: req.Description,
+			Status:      req.Status,
+		},
+	)
 	if err != nil {
 		writeUsecaseError(w, err)
 		return
@@ -153,9 +159,11 @@ func writeUsecaseError(w http.ResponseWriter, err error) {
 }
 
 func writeError(w http.ResponseWriter, status int, err error) {
-	writeJSON(w, status, map[string]string{
-		"error": err.Error(),
-	})
+	writeJSON(
+		w, status, map[string]string{
+			"error": err.Error(),
+		},
+	)
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {

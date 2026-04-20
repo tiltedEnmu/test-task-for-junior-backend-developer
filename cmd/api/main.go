@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -19,9 +20,13 @@ import (
 )
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
+	logger := slog.New(
+		slog.NewTextHandler(
+			os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			},
+		),
+	)
 
 	cfg := loadConfig()
 
@@ -60,7 +65,7 @@ func main() {
 
 	logger.Info("http server started", "addr", cfg.HTTPAddr)
 
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("listen and serve", "error", err)
 		os.Exit(1)
 	}

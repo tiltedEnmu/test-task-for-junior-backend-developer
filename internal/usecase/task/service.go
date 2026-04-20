@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"example.com/taskservice/internal/domain/recurrencerule"
 	taskdomain "example.com/taskservice/internal/domain/task"
 )
 
@@ -28,9 +29,15 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Ta
 	}
 
 	model := &taskdomain.Task{
-		Title:       normalized.Title,
-		Description: normalized.Description,
-		Status:      normalized.Status,
+		Title:          normalized.Title,
+		Description:    normalized.Description,
+		Status:         normalized.Status,
+		IsRecurring:    normalized.IsRecurring,
+		RecurrenceRule: normalized.RecurrenceRule,
+	}
+	if normalized.IsRecurring == false || normalized.RecurrenceRule.Empty() {
+		model.IsRecurring = false
+		model.RecurrenceRule = recurrencerule.RecurrenceRule{}
 	}
 	now := s.now()
 	model.CreatedAt = now
@@ -63,11 +70,17 @@ func (s *Service) Update(ctx context.Context, id int64, input UpdateInput) (*tas
 	}
 
 	model := &taskdomain.Task{
-		ID:          id,
-		Title:       normalized.Title,
-		Description: normalized.Description,
-		Status:      normalized.Status,
-		UpdatedAt:   s.now(),
+		ID:             id,
+		Title:          normalized.Title,
+		Description:    normalized.Description,
+		Status:         normalized.Status,
+		IsRecurring:    normalized.IsRecurring,
+		RecurrenceRule: normalized.RecurrenceRule,
+		UpdatedAt:      s.now(),
+	}
+	if normalized.IsRecurring == false || normalized.RecurrenceRule.Empty() {
+		model.IsRecurring = false
+		model.RecurrenceRule = recurrencerule.RecurrenceRule{}
 	}
 
 	updated, err := s.repo.Update(ctx, model)
@@ -106,6 +119,16 @@ func validateCreateInput(input CreateInput) (CreateInput, error) {
 		return CreateInput{}, fmt.Errorf("%w: invalid status", ErrInvalidInput)
 	}
 
+	if !input.RecurrenceRule.Valid() {
+		return CreateInput{}, fmt.Errorf("%w: recurrence rule is invalid", ErrInvalidInput)
+	}
+
+	if input.IsRecurring == true && input.RecurrenceRule.Empty() {
+		return CreateInput{}, fmt.Errorf("%w: recurrence rule is empty", ErrInvalidInput)
+	}
+
+	recurrencerule.Normalize(&input.RecurrenceRule)
+
 	return input, nil
 }
 
@@ -120,6 +143,13 @@ func validateUpdateInput(input UpdateInput) (UpdateInput, error) {
 	if !input.Status.Valid() {
 		return UpdateInput{}, fmt.Errorf("%w: invalid status", ErrInvalidInput)
 	}
+	if !input.RecurrenceRule.Valid() {
+		return UpdateInput{}, fmt.Errorf("%w: recurrence rule is invalid", ErrInvalidInput)
+	}
+	if input.IsRecurring == true && input.RecurrenceRule.Empty() {
+		return UpdateInput{}, fmt.Errorf("%w: recurrence rule is empty", ErrInvalidInput)
+	}
+	recurrencerule.Normalize(&input.RecurrenceRule)
 
 	return input, nil
 }
